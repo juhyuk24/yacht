@@ -1,0 +1,14 @@
+.main-container {
+    width: 100vh;
+    height: 100vh;
+}
+.scoreboard {
+    width: 30%;
+    height: 100%;
+    float: left;
+}
+.yachtCanvas {
+    width: 70%;
+    height: 100%;
+    float: right;
+}
