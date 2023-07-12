@@ -3,12 +3,19 @@
     height: 100vh;
 }
 .scoreboard {
-    width: 30%;
+    width: fit-content;
     height: 100%;
     float: left;
 }
 .yachtCanvas {
-    width: 70%;
+    width: fit-content;
     height: 100%;
     float: right;
+}
+table {
+    border-collapse: collapse;
+}
+.scoreboard th,.scoreboard td {
+    padding: 8px;
+    border: 1px solid black;
 }

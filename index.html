@@ -3,29 +3,119 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>yacht demo</title>
+
+    <title>Yacht!</title>
 
     <!-- link index.css, bootstrap -->
     <link href="css/index.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
 
 </head>
-    <!-- main container -->
-    <body class="main-container">
 
-        <!-- yacht Scoreboard -->
-        <div class="scoreboard">
-            ScoreBoard Area
-        </div>
+<!-- main container -->
+<body class="main-container">
 
-        <!-- yacht Dice Canvas -->
-        <div class="yachtCanvas">
-            Canvas Area
-            <canvas>
+    <!-- yacht Scoreboard -->
+    <div class="scoreboard">
+        <table>
+            <thead>
+            <tr>
+                <th>Categories</th>
+                <th>Player 1</th>
+                <th>Player 2</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Aces</td>
+                <td id="player1-aces"></td>
+                <td id="player2-aces"></td>
+            </tr>
+            <tr>
+                <td>Twos</td>
+                <td id="player1-twos"></td>
+                <td id="player2-twos"></td>
+            </tr>
+            <tr>
+                <td>Threes</td>
+                <td id="player1-threes"></td>
+                <td id="player2-threes"></td>
+            </tr>
+            <tr>
+                <td>Fours</td>
+                <td id="player1-fours"></td>
+                <td id="player2-fours"></td>
+            </tr>
+            <tr>
+                <td>Fives</td>
+                <td id="player1-fives"></td>
+                <td id="player2-fives"></td>
+            </tr>
+            <tr>
+                <td>Sixes</td>
+                <td id="player1-sixes"></td>
+                <td id="player2-sixes"></td>
+            </tr>
+            <tr>
+                <td><b>Subtotal</b></td>
+                <td id="player1-sum"></td>
+                <td id="player2-sum"></td>
+            </tr>
+            <tr>
+                <td>Bonus +35</td>
+                <td id="player1-bonus"></td>
+                <td id="player2-bonus"></td>
+            </tr>
+            <tr>
+                <td>Choice</td>
+                <td id="player1-choice"></td>
+                <td id="player2-choice"></td>
+            </tr>
+            <tr>
+                <td>4 of a Kind</td>
+                <td id="player1-four-of-a-kind"></td>
+                <td id="player2-four-of-a-kind"></td>
+            </tr>
+            <tr>
+                <td>Full House</td>
+                <td id="player1-full-house"></td>
+                <td id="player2-full-house"></td>
+            </tr>
+            <tr>
+                <td>Small Straight</td>
+                <td id="player1-small-straight"></td>
+                <td id="player2-small-straight"></td>
+            </tr>
+            <tr>
+                <td>Large Straight</td>
+                <td id="player1-large-straight"></td>
+                <td id="player2-large-straight"></td>
+            </tr>
+            <tr>
+                <td>Yacht</td>
+                <td id="player1-yacht"></td>
+                <td id="player2-yacht"></td>
+            </tr>
+            <tr>
+                <td><b>Total</b></td>
+                <td id="player1-total"></td>
+                <td id="player2-total"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- End of yacht Scoreboard -->
 
-            </canvas>
-        </div>
+    <!-- yacht Dice Canvas -->
+    <div class="yachtCanvas">
+        Canvas Area
+        <canvas>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
-    </body>
+        </canvas>
+    </div>
+
+    <!-- bootstrap js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+
+</body>
 </html>
