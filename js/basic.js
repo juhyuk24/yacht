@@ -1,16 +1,18 @@
-import * as THREE from '../three.module.js';
+import * as THREE from './three.module.js';
 
 class App {
     constructor() {
-        const divContainer = document.querySelector(".yachtCanvas");
-        this._divContainer = divContainer; // field화 시켰다, 다른 method에서 참조할 수 있도록 하기 위해서 this._divContaner로 정의함.
+        const canvasContainer = document.querySelector(".yachtCanvas");
+        const scoreboradContainer = document.querySelector(".scoreboard");
+        this._canvasContainer = canvasContainer; // field화 시켰다, 다른 method에서 참조할 수 있도록 하기 위해서 this._divContaner로 정의함.
+        this._scoreboradContainer = scoreboradContainer;
 
         // renderer객체에 antialias를 활성화 시켜주면, 3차원 장면이 렌더링될 때 object 경계선이 계단 현상 없이 부드럽게 표현된다.
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer( { canvas: canvasContainer }, { antialias: true } );
         // setPixelRatio : pixel에 ratio값을 설정한다. window.devicePixelRatio 속성으로 그 값을 쉽게 얻을 수 있다. (디스플레이 크기 항목 값)
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(canvasContainer.clientWidth, scoreboradContainer.clientHeight);
         // renderer.domElement : canvas타입의 dom 객체이다.
-        divContainer.appendChild(renderer.domElement);
         this._renderer = renderer;
 
         const scene = new THREE.Scene();
@@ -34,8 +36,8 @@ class App {
 
     _setupCamera() {
         // three.js가 3차원 그래픽을 출력할 영역에 대한 가로와 세로의 크기
-        const width = this._divContainer.clientWidth;
-        const height = this._divContainer.clientHeight;
+        const width = this._canvasContainer.clientWidth;
+        const height = this._scoreboradContainer.height;
         // 위의 크기들을 이용해서 camera 객체 생성
         const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 100);
         camera.position.z = 2;
@@ -68,8 +70,8 @@ class App {
     }
 
     resize() {
-        const width = this._divContainer.clientWidth;
-        const height = this._divContainer.clientHeight;
+        const width = this._canvasContainer.clientWidth;
+        const height = this._scoreboradContainer.clientHeight;
 
         // camera의 속성 값 설정
         this._camera.aspect = width / height;

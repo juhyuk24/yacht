@@ -1,6 +1,6 @@
 .main-container {
-    width: 100vh;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
 }
 .scoreboard {
     width: fit-content;
@@ -8,9 +8,8 @@
     float: left;
 }
 .yachtCanvas {
-    width: fit-content;
+    width: 65%;
     height: 100%;
-    float: right;
 }
 table {
     border-collapse: collapse;
