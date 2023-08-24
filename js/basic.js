@@ -29,9 +29,7 @@ const params = {
 
 const diceArray = [];
 let numArray = [];
-const boxMeshs = [];
-const boxes = [];
-
+let boxMeshs = [];
 
 initPhysics();
 initScene();
@@ -98,7 +96,7 @@ function initScene() {
     });
 
 
-    const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00, wireframe : true});
+    const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00, wireframe : true, transparent : true, opacity : 0});
     const boxWall1 = new THREE.Mesh(new THREE.BoxGeometry(13,0,13), boxMaterial); // 바닥
     const boxWall2 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 왼쪽벽
     const boxWall3 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 오른쪽벽
@@ -113,7 +111,7 @@ function initScene() {
     boxWall5.position.z = -5.6;
 
 
-    const boxMeshs = new THREE.Group();
+    boxMeshs = new THREE.Group();
     boxMeshs.add(boxWall1, boxWall2, boxWall3, boxWall4,boxWall5);
     scene.add(boxMeshs);
 
@@ -156,7 +154,19 @@ function initScene() {
     physicsWorld.addBody(boxBody5);
 
 
+    const raycaster = new THREE.Raycaster();
+    const rayOrigin = new THREE.Vector3(0,0.5,0);
+    const rayDirection = new THREE.Vector3(10,0,0);
 
+    const intersect = raycaster.intersectObject(boxWall2);
+
+    rayDirection.normalize();
+
+    raycaster.set(rayOrigin, rayDirection);
+
+    console.log(intersect);
+
+    scene.add(new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin,300, 0x00ff00 ));
 
 
     render();
@@ -405,16 +415,13 @@ function render() {
     physicsWorld.fixedStep();
 
 
-
     for (const dice of diceArray) {
         dice.mesh.position.copy(dice.body.position)
         dice.mesh.quaternion.copy(dice.body.quaternion)
+
     }
 
-    for (let i = 0; i < boxMeshs.length; i++) {
-        boxes[i].position.copy(boxMeshs[i].position)
-        boxes[i].quaternion.copy(boxMeshs[i].quaternion)
-    }
+
 
     renderer.render(scene, camera);
     requestAnimationFrame(render);
