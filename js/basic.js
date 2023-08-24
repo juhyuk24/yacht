@@ -1,106 +1,451 @@
-import * as THREE from './three.module.js';
+import * as THREE from 'https://cdn.skypack.dev/three@0.129';
+//import * as THREE from 'three';
+import * as CANNON from 'https://cdn.skypack.dev/cannon-es';
+import {OrbitControls} from 'https://cdn.skypack.dev/three@0.136/examples/jsm/controls/OrbitControls.js';
+import { BufferGeometryUtils } from "//cdn.skypack.dev/three@0.129.0/examples/jsm/utils/BufferGeometryUtils?min";
+import { GLTFLoader } from "https://cdn.skypack.dev/three@0.129/examples/jsm/loaders/GLTFLoader";
+//import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-class App {
-    constructor() {
-        const canvasContainer = document.querySelector(".yachtCanvas");
-        const scoreboradContainer = document.querySelector(".scoreboard");
-        this._canvasContainer = canvasContainer; // field화 시켰다, 다른 method에서 참조할 수 있도록 하기 위해서 this._divContaner로 정의함.
-        this._scoreboradContainer = scoreboradContainer;
 
-        // renderer객체에 antialias를 활성화 시켜주면, 3차원 장면이 렌더링될 때 object 경계선이 계단 현상 없이 부드럽게 표현된다.
-        const renderer = new THREE.WebGLRenderer( { canvas: canvasContainer }, { antialias: true } );
-        // setPixelRatio : pixel에 ratio값을 설정한다. window.devicePixelRatio 속성으로 그 값을 쉽게 얻을 수 있다. (디스플레이 크기 항목 값)
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(canvasContainer.clientWidth, scoreboradContainer.clientHeight);
-        // renderer.domElement : canvas타입의 dom 객체이다.
-        this._renderer = renderer;
+const canvasContainer = document.querySelector('.yachtCanvas');
+const scoreboardContainer = document.querySelector(".scoreboard");
+const rollBtn = document.querySelector("#roll-btn");
 
-        const scene = new THREE.Scene();
-        this._scene = scene;
+const gltfLoader = new GLTFLoader();
 
-        this._setupCamera();
-        this._setupLight();
-        this._setupModel();
+//const scoreResult = document.querySelector('#score-result');
+//const rollBtn = document.querySelector('#roll-btn');
 
-        // onresize : 창 크기가 변경되면 발생하는 이벤트
-        // resize 이벤트가 필요한 이유 ? renderer나 camera는 창 크기가 변경될 때마다 그 크기에 맞게 속성 값을 재설정해줘야 한다.
-        // bind를 사용하는 이유 ? resize method 안에서 this가 가르키는 객체가 이벤트 객체가 아닌, App클래스의 객체가 되도록 하기 위해서이다.
-        window.onresize = this.resize.bind(this);
-        // 위의 onresize와는 상관없이 무조건적으로 App클래스 내부에서 한 번 호출하는 이유는, renderer나 camera의 창 크기에 맞게 설정해주기 위함이다.
-        this.resize();
+let renderer, scene, camera, diceMesh, physicsWorld;
 
-        // render method는 3차원 그래픽 장면을 만들어준다,
-        // requestAnimationFrame : 적당한 시점에 또는, 최대한 빠르게 render method를 호출한다.
-        requestAnimationFrame(this.render.bind(this));
+const params = {
+    numberOfDice: 5,
+    segments: 40,
+    edgeRadius: .07,
+    notchRadius: .12,
+    notchDepth: .1,
+};
+
+
+const diceArray = [];
+let numArray = [];
+const boxMeshs = [];
+const boxes = [];
+
+
+initPhysics();
+initScene();
+
+window.addEventListener('resize', updateSceneSize);
+
+//window.addEventListener('dblclick', throwDice);
+//rollBtn.addEventListener('click', throwDice);
+
+function initScene() {
+
+    renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+        canvas: canvasContainer
+    });
+    renderer.setSize(canvasContainer.clientWidth, scoreboardContainer.clientHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, .1, 1000)
+
+    camera.position.set(0, 20, -30);
+
+    const orbit = new OrbitControls(camera, renderer.domElement);
+
+    orbit.update();
+
+    updateSceneSize();
+
+    const ambientLight = new THREE.AmbientLight(0xffffff,0.8);
+    scene.add(ambientLight);
+    const topLight = new THREE.PointLight(0xffffff, 1.1);
+    topLight.position.set(10, 15, 0);
+    topLight.castShadow = true;
+    topLight.shadow.mapSize.width = 2048;
+    topLight.shadow.mapSize.height = 2048;
+    topLight.shadow.camera.near = 5;
+    topLight.shadow.camera.far = 400;
+
+    scene.add(topLight);
+
+    createFloor();
+    //createDiceBox();
+    diceMesh = createDiceMesh();
+    for (let i = 0; i < params.numberOfDice; i++) {
+        diceArray.push(createDice());
+        addDiceEvents(diceArray[i],i);
     }
 
-    _setupCamera() {
-        // three.js가 3차원 그래픽을 출력할 영역에 대한 가로와 세로의 크기
-        const width = this._canvasContainer.clientWidth;
-        const height = this._scoreboradContainer.height;
-        // 위의 크기들을 이용해서 camera 객체 생성
-        const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 100);
-        camera.position.z = 2;
-        this._camera = camera;
+    //throwDice();
+
+    gltfLoader.load('models/YachtBox2.glb', function (gltf) {
+        const box = gltf.scene.children[0];
+
+        gltf.scene.position.set(0,-2,0);
+        box.scale.set(2,2,2);
+        box.castShadow = true;
+
+        console.log(gltf);
+        scene.add(gltf.scene);
+    });
+
+
+    const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00, wireframe : true});
+    const boxWall1 = new THREE.Mesh(new THREE.BoxGeometry(13,0,13), boxMaterial); // 바닥
+    const boxWall2 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 왼쪽벽
+    const boxWall3 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 오른쪽벽
+    const boxWall4 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 위쪽벽
+    const boxWall5 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 아래쪽벽
+
+    boxWall2.rotation.y = Math.PI / 2;
+    boxWall3.rotation.y = Math.PI / 2;
+    boxWall2.position.x = 7;
+    boxWall3.position.x = -7;
+    boxWall4.position.z = 5.6;
+    boxWall5.position.z = -5.6;
+
+
+    const boxMeshs = new THREE.Group();
+    boxMeshs.add(boxWall1, boxWall2, boxWall3, boxWall4,boxWall5);
+    scene.add(boxMeshs);
+
+
+    const boxBody1 = new CANNON.Body({
+        type: CANNON.Body.STATIC,
+        shape: new CANNON.Box(new CANNON.Vec3(13,0,13)),
+    });
+    const boxBody2 = new CANNON.Body({
+        type: CANNON.Body.STATIC,
+        shape: new CANNON.Box(new CANNON.Vec3(12,10,1)),
+    });
+    const boxBody3 = new CANNON.Body({
+        type: CANNON.Body.STATIC,
+        shape: new CANNON.Box(new CANNON.Vec3(12,10,1)),
+    });
+    const boxBody4 = new CANNON.Body({
+        type: CANNON.Body.STATIC,
+        shape: new CANNON.Box(new CANNON.Vec3(12,10,1)),
+    });
+    const boxBody5 = new CANNON.Body({
+        type: CANNON.Body.STATIC,
+        shape: new CANNON.Box(new CANNON.Vec3(12,10,1)),
+    });
+    boxBody1.position.copy(boxWall1.position);
+    boxBody1.quaternion.copy(boxWall1.quaternion);
+    boxBody2.position.copy(boxWall2.position);
+    boxBody2.quaternion.copy(boxWall2.quaternion);
+    boxBody3.position.copy(boxWall3.position);
+    boxBody3.quaternion.copy(boxWall3.quaternion);
+    boxBody4.position.copy(boxWall4.position);
+    boxBody4.quaternion.copy(boxWall4.quaternion);
+    boxBody5.position.copy(boxWall5.position);
+    boxBody5.quaternion.copy(boxWall5.quaternion);
+
+    physicsWorld.addBody(boxBody1);
+    physicsWorld.addBody(boxBody2);
+    physicsWorld.addBody(boxBody3);
+    physicsWorld.addBody(boxBody4);
+    physicsWorld.addBody(boxBody5);
+
+
+
+
+
+    render();
+
+}
+
+function initPhysics() {
+    physicsWorld = new CANNON.World({
+        allowSleep: true,
+        gravity: new CANNON.Vec3(0, -50, 0),
+    })
+    physicsWorld.defaultContactMaterial.restitution = 0.3;
+    physicsWorld.defaultContactMaterial.friction = 0.5;
+}
+
+function createFloor() {
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(500, 500),
+        new THREE.MeshStandardMaterial({
+            color : 0x808080,
+
+        })
+    )
+    floor.receiveShadow = true;
+    floor.position.y = -1;
+    floor.position.z = -5;
+    floor.quaternion.setFromAxisAngle(new THREE.Vector3(-1, 0, 0), Math.PI * .5);
+    scene.add(floor);
+
+    const floorBody = new CANNON.Body({
+        type: CANNON.Body.STATIC,
+        shape: new CANNON.Plane(),
+    });
+    floorBody.position.copy(floor.position);
+    floorBody.quaternion.copy(floor.quaternion);
+    physicsWorld.addBody(floorBody);
+}
+
+
+function createBoxWallGeometry() {
+    const boxWidth = 12;
+    const boxHeight = 5;
+    const boxDepth = 2;
+    const boxGeometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+
+    return boxGeometry;
+}
+
+
+
+function createDiceMesh() {
+    const boxMaterialOuter = new THREE.MeshStandardMaterial({
+        color: 0xeeeeee,
+    })
+    const boxMaterialInner = new THREE.MeshStandardMaterial({
+        color: 0x000000,
+        roughness: 0,
+        metalness: 1,
+        side: THREE.DoubleSide
+    })
+
+    const diceMesh = new THREE.Group();
+    const innerMesh = new THREE.Mesh(createInnerGeometry(), boxMaterialInner);
+    const outerMesh = new THREE.Mesh(createBoxGeometry(), boxMaterialOuter);
+    outerMesh.castShadow = true;
+    diceMesh.add(innerMesh, outerMesh);
+
+    return diceMesh;
+}
+
+function createDice() {
+    const mesh = diceMesh.clone();
+    scene.add(mesh);
+
+    const body = new CANNON.Body({
+        mass: 1,
+        shape: new CANNON.Box(new CANNON.Vec3(.5, .5, .5)),
+        sleepTimeLimit: .1
+    });
+    physicsWorld.addBody(body);
+
+    return {mesh, body};
+}
+
+function createBoxGeometry() {
+
+    let boxGeometry = new THREE.BoxGeometry(1, 1, 1, params.segments, params.segments, params.segments);
+
+    const positionAttr = boxGeometry.attributes.position;
+    const subCubeHalfSize = .5 - params.edgeRadius;
+
+
+    for (let i = 0; i < positionAttr.count; i++) {
+
+        let position = new THREE.Vector3().fromBufferAttribute(positionAttr, i);
+
+        const subCube = new THREE.Vector3(Math.sign(position.x), Math.sign(position.y), Math.sign(position.z)).multiplyScalar(subCubeHalfSize);
+        const addition = new THREE.Vector3().subVectors(position, subCube);
+
+        if (Math.abs(position.x) > subCubeHalfSize && Math.abs(position.y) > subCubeHalfSize && Math.abs(position.z) > subCubeHalfSize) {
+            addition.normalize().multiplyScalar(params.edgeRadius);
+            position = subCube.add(addition);
+        } else if (Math.abs(position.x) > subCubeHalfSize && Math.abs(position.y) > subCubeHalfSize) {
+            addition.z = 0;
+            addition.normalize().multiplyScalar(params.edgeRadius);
+            position.x = subCube.x + addition.x;
+            position.y = subCube.y + addition.y;
+        } else if (Math.abs(position.x) > subCubeHalfSize && Math.abs(position.z) > subCubeHalfSize) {
+            addition.y = 0;
+            addition.normalize().multiplyScalar(params.edgeRadius);
+            position.x = subCube.x + addition.x;
+            position.z = subCube.z + addition.z;
+        } else if (Math.abs(position.y) > subCubeHalfSize && Math.abs(position.z) > subCubeHalfSize) {
+            addition.x = 0;
+            addition.normalize().multiplyScalar(params.edgeRadius);
+            position.y = subCube.y + addition.y;
+            position.z = subCube.z + addition.z;
+        }
+
+        const notchWave = (v) => {
+            v = (1 / params.notchRadius) * v;
+            v = Math.PI * Math.max(-1, Math.min(1, v));
+            return params.notchDepth * (Math.cos(v) + 1.);
+        }
+        const notch = (pos) => notchWave(pos[0]) * notchWave(pos[1]);
+
+        const offset = .23;
+
+        if (position.y === .5) {
+            position.y -= notch([position.x, position.z]);
+        } else if (position.x === .5) {
+            position.x -= notch([position.y + offset, position.z + offset]);
+            position.x -= notch([position.y - offset, position.z - offset]);
+        } else if (position.z === .5) {
+            position.z -= notch([position.x - offset, position.y + offset]);
+            position.z -= notch([position.x, position.y]);
+            position.z -= notch([position.x + offset, position.y - offset]);
+        } else if (position.z === -.5) {
+            position.z += notch([position.x + offset, position.y + offset]);
+            position.z += notch([position.x + offset, position.y - offset]);
+            position.z += notch([position.x - offset, position.y + offset]);
+            position.z += notch([position.x - offset, position.y - offset]);
+        } else if (position.x === -.5) {
+            position.x += notch([position.y + offset, position.z + offset]);
+            position.x += notch([position.y + offset, position.z - offset]);
+            position.x += notch([position.y, position.z]);
+            position.x += notch([position.y - offset, position.z + offset]);
+            position.x += notch([position.y - offset, position.z - offset]);
+        } else if (position.y === -.5) {
+            position.y += notch([position.x + offset, position.z + offset]);
+            position.y += notch([position.x + offset, position.z]);
+            position.y += notch([position.x + offset, position.z - offset]);
+            position.y += notch([position.x - offset, position.z + offset]);
+            position.y += notch([position.x - offset, position.z]);
+            position.y += notch([position.x - offset, position.z - offset]);
+        }
+
+        positionAttr.setXYZ(i, position.x, position.y, position.z);
     }
 
-    _setupLight() {
-        const color = 0xffffff;
-        const intensity = 1;
-        // 광원을 생성하기 위해서는, 광원의 색상과 세기 값이 필요하다.
-        const light = new THREE.DirectionalLight(color, intensity);
-        // 광원의 위치 설정
-        light.position.set(-1, 2, 4);
-        // 생성한 광원을 scene 객체의 구성 요소로 추가한다.
-        this._scene.add(light);
-    }
+    boxGeometry.deleteAttribute('normal');
+    boxGeometry.deleteAttribute('uv');
+    boxGeometry = BufferGeometryUtils.mergeVertices(boxGeometry);
 
-    // 파란색의 정육면체 mesh를 생성
-    _setupModel() {
-        // 정육면체에 대한 형상을 정의하기 위하여, BoxGeometry클래스를 이용해, geometry 객체를 생성.
-        const geometry = new THREE.BoxGeometry(1, 1, 1); // (가로, 세로, 깊이)
-        // 파란색 계열의 재질을 생성
-        const material = new THREE.MeshPhongMaterial({ color: 0x44a88 });
+    boxGeometry.computeVertexNormals();
 
-        // 정육면체 mesh
-        const cube = new THREE.Mesh(geometry, material);
+    return boxGeometry;
+}
 
-        this._scene.add(cube);
-        this._cube = cube;
-    }
 
-    resize() {
-        const width = this._canvasContainer.clientWidth;
-        const height = this._scoreboradContainer.clientHeight;
+function createInnerGeometry() {
+    const baseGeometry = new THREE.PlaneGeometry(1 - 2 * params.edgeRadius, 1 - 2 * params.edgeRadius);
+    const offset = .48;
+    return BufferGeometryUtils.mergeBufferGeometries([
+        baseGeometry.clone().translate(0, 0, offset),
+        baseGeometry.clone().translate(0, 0, -offset),
+        baseGeometry.clone().rotateX(.5 * Math.PI).translate(0, -offset, 0),
+        baseGeometry.clone().rotateX(.5 * Math.PI).translate(0, offset, 0),
+        baseGeometry.clone().rotateY(.5 * Math.PI).translate(-offset, 0, 0),
+        baseGeometry.clone().rotateY(.5 * Math.PI).translate(offset, 0, 0),
+    ], false);
+}
 
-        // camera의 속성 값 설정
-        this._camera.aspect = width / height;
-        this._camera.updateProjectionMatrix();
 
-        // renderer의 크기 설정
-        this._renderer.setSize(width, height);
-    }
+function addDiceEvents(dice, i) {
+    dice.body.addEventListener('sleep', (e) => {
 
-    // time: 렌더링이 처음 시작된 이후, 경과된 시간 값으로 단위가 milli-second이다.
-    // time인자를 scene의 애니메이션에 이용할 수 있다.
-    render(time) {
-        // renderer가 scene을 camera의 시점을 이용해서 렌더링하라.
-        this._renderer.render(this._scene, this._camera);
-        // time을 전달 받아, 속성 값을 변경함으로써 애니메이션 효과를 발생시킨다.
-        this.update(time);
-        requestAnimationFrame(this.render.bind(this));
-    }
+        dice.body.allowSleep = false;
 
-    // time? requestAnimation 함수가 render함수에 전달해 주는 값이다.
-    // 정육면체를 자동으로 회전시키는 코드
-    update(time) {
-        time *= 0.001; // milli-second unit를 second unit로 변환해줌.
-        // 시간은 계속 변하므로, x와 y축으로 cube가 계속 회전한다.
-        this._cube.rotation.x = time;
-        this._cube.rotation.y = time;
+        const euler = new CANNON.Vec3();
+        e.target.quaternion.toEuler(euler);
+
+        const eps = .1;
+        let isZero = (angle) => Math.abs(angle) < eps;
+        let isHalfPi = (angle) => Math.abs(angle - .5 * Math.PI) < eps;
+        let isMinusHalfPi = (angle) => Math.abs(.5 * Math.PI + angle) < eps;
+        let isPiOrMinusPi = (angle) => (Math.abs(Math.PI - angle) < eps || Math.abs(Math.PI + angle) < eps);
+
+
+        if (isZero(euler.z)) {
+            if (isZero(euler.x)) {
+                //showRollResults(1);
+                numArray[i] = 1;
+                console.log(numArray[i]);
+            } else if (isHalfPi(euler.x)) {
+                //showRollResults(4);
+                numArray[i] = 4;
+                console.log(numArray[i]);
+            } else if (isMinusHalfPi(euler.x)) {
+                //showRollResults(3);
+                numArray[i] = 3;
+                console.log(numArray[i]);
+            } else if (isPiOrMinusPi(euler.x)) {
+                //showRollResults(6);
+                numArray[i] = 6;
+                console.log(numArray[i]);
+            } else {
+                // landed on edge => wait to fall on side and fire the event again
+                dice.body.allowSleep = true;
+            }
+        } else if (isHalfPi(euler.z)) {
+            //showRollResults(2);
+            numArray[i] = 2;
+            console.log(numArray[i]);
+        } else if (isMinusHalfPi(euler.z)) {
+            //showRollResults(5);
+            numArray[i] = 5;
+            console.log(numArray[i]);
+        } else {
+            // landed on edge => wait to fall on side and fire the event again
+            dice.body.allowSleep = true;
+        }
+    });
+}
+
+
+function showRollResults(score) {
+    if (scoreResult.innerHTML === '') {
+        scoreResult.innerHTML += score;
+    } else {
+        scoreResult.innerHTML += ('+' + score);
     }
 }
 
-window.onload = function () {
-    new App();
-};
+function render() {
+    physicsWorld.fixedStep();
+
+
+
+    for (const dice of diceArray) {
+        dice.mesh.position.copy(dice.body.position)
+        dice.mesh.quaternion.copy(dice.body.quaternion)
+    }
+
+    for (let i = 0; i < boxMeshs.length; i++) {
+        boxes[i].position.copy(boxMeshs[i].position)
+        boxes[i].quaternion.copy(boxMeshs[i].quaternion)
+    }
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(render);
+}
+
+function updateSceneSize() {
+    camera.aspect = canvasContainer.clientWidth / scoreboardContainer.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(canvasContainer.clientWidth, scoreboardContainer.clientHeight);
+}
+
+function throwDice() {
+    scoreResult.innerHTML = '';
+
+    diceArray.forEach((d, dIdx) => {
+
+        d.body.velocity.setZero();
+        d.body.angularVelocity.setZero();
+
+        d.body.position = new CANNON.Vec3(6, dIdx * 1.5, 0);
+        d.mesh.position.copy(d.body.position);
+
+        d.mesh.rotation.set(2 * Math.PI * Math.random(), 0, 2 * Math.PI * Math.random())
+        d.body.quaternion.copy(d.mesh.quaternion);
+
+        const force = 3 + 5 * Math.random();
+        d.body.applyImpulse(
+            new CANNON.Vec3(-force, force, 0),
+            new CANNON.Vec3(0, 0, .2)
+        );
+
+        d.body.allowSleep = true;
+    });
+}

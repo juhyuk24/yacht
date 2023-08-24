@@ -1,20 +1,61 @@
-.main-container {
-    width: 100%;
-    height: 100%;
+.game-box {
+    display: flex;
+    width: 70vw;
+    height: 80vh;
+}
+#logo {
+    font-family: 'LogoFont';
+    font-size: 50px;
+}
+@font-face {
+    font-family: 'LogoFont';
+    src: url('../fonts/Gluten-Medium.ttf') format('truetype');
 }
 .scoreboard {
+    text-align: center;
     width: fit-content;
+    width: 17vw;
     height: 100%;
-    float: left;
+    background-image: url("../img/paper7.jpg");
+    border-radius: 10px 10px 10px 10px;
+    font-family: 'BoardFont';
+}
+@font-face {
+    font-family: BoardFont;
+    src: url('../fonts/Jua-Regular.ttf') format('truetype');
 }
 .yachtCanvas {
-    width: 65%;
+    width: 53vw;
     height: 100%;
+    border-radius: 10px 10px 10px 10px;
 }
 table {
     border-collapse: collapse;
 }
+table th,
+ table td {
+     border: 1px black solid;
+ }
+table th:first-child,
+table td:first-child {
+    border-left: 0;
+}
+table th:last-child,
+table td:last-child {
+    border-right: 0;
+}
+table thead tr th{
+    border-top: 0;
+}
+table tfoot tr td{
+    border-bottom: 0;
+}
 .scoreboard th,.scoreboard td {
     padding: 8px;
-    border: 1px solid black;
+}
+.content-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
 }
