@@ -13,6 +13,9 @@ const rollBtn = document.querySelector("#roll-btn");
 
 const gltfLoader = new GLTFLoader();
 
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
 //const scoreResult = document.querySelector('#score-result');
 //const rollBtn = document.querySelector('#roll-btn');
 
@@ -26,7 +29,6 @@ const params = {
     notchDepth: .1,
 };
 
-
 const diceArray = [];
 let numArray = [];
 let boxMeshs = [];
@@ -35,6 +37,7 @@ initPhysics();
 initScene();
 
 window.addEventListener('resize', updateSceneSize);
+window.addEventListener( 'pointerdown', onMouseClick );
 
 //window.addEventListener('dblclick', throwDice);
 //rollBtn.addEventListener('click', throwDice);
@@ -96,7 +99,7 @@ function initScene() {
     });
 
 
-    const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00, wireframe : true, transparent : true, opacity : 0});
+    const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00, wireframe : false, transparent : false, opacity : 0});
     const boxWall1 = new THREE.Mesh(new THREE.BoxGeometry(13,0,13), boxMaterial); // 바닥
     const boxWall2 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 왼쪽벽
     const boxWall3 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 오른쪽벽
@@ -109,7 +112,6 @@ function initScene() {
     boxWall3.position.x = -7;
     boxWall4.position.z = 5.6;
     boxWall5.position.z = -5.6;
-
 
     boxMeshs = new THREE.Group();
     boxMeshs.add(boxWall1, boxWall2, boxWall3, boxWall4,boxWall5);
@@ -154,24 +156,33 @@ function initScene() {
     physicsWorld.addBody(boxBody5);
 
 
-    const raycaster = new THREE.Raycaster();
-    const rayOrigin = new THREE.Vector3(0,0.5,0);
-    const rayDirection = new THREE.Vector3(10,0,0);
-
-    const intersect = raycaster.intersectObject(boxWall2);
-
-    rayDirection.normalize();
-
-    raycaster.set(rayOrigin, rayDirection);
-
-    console.log(intersect);
-
-    scene.add(new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin,300, 0x00ff00 ));
-
-
+    console.log(scene.children);
     render();
 
 }
+
+function onMouseClick( event ) {
+
+    // calculate pointer position in normalized device coordinates
+    // (-1 to +1) for both components
+
+    const gapX = event.clientX - event.offsetX;
+    const gapY = event.clientY - event.offsetY;
+
+    pointer.x = (( event.clientX - gapX) / (canvasContainer.clientWidth)) * 2 - 1;
+    pointer.y = - (( event.clientY - gapY) / (scoreboardContainer.clientHeight )) * 2 + 1;
+
+    raycaster.setFromCamera( pointer, camera );
+
+    // calculate objects intersecting the picking ray
+    const intersects = raycaster.intersectObjects(scene.children);
+    intersects.forEach( obj => obj.object.material.color.set(0x00ff00) );
+
+
+    console.log(pointer);
+
+}
+
 
 function initPhysics() {
     physicsWorld = new CANNON.World({
@@ -415,17 +426,24 @@ function render() {
     physicsWorld.fixedStep();
 
 
+
+
     for (const dice of diceArray) {
         dice.mesh.position.copy(dice.body.position)
         dice.mesh.quaternion.copy(dice.body.quaternion)
 
     }
 
+    // update the picking ray with the camera and pointer position
+
+
 
 
     renderer.render(scene, camera);
     requestAnimationFrame(render);
 }
+
+
 
 function updateSceneSize() {
     camera.aspect = canvasContainer.clientWidth / scoreboardContainer.clientHeight;
@@ -456,3 +474,4 @@ function throwDice() {
         d.body.allowSleep = true;
     });
 }
+
