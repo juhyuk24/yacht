@@ -37,7 +37,7 @@ initPhysics();
 initScene();
 
 window.addEventListener('resize', updateSceneSize);
-window.addEventListener( 'click', onMouseClick );
+window.addEventListener( 'pointerdown', onMouseClick );
 
 //window.addEventListener('dblclick', throwDice);
 //rollBtn.addEventListener('click', throwDice);
@@ -172,15 +172,15 @@ function onMouseClick( event ) {
     // calculate pointer position in normalized device coordinates
     // (-1 to +1) for both components
 
-    pointer.x = (( event.clientX / window.innerWidth)) * 2 - 1;
-    pointer.y = - (( event.clientY / window.innerHeight )) * 2 + 1;
+    pointer.x = (( event.clientX  ) / (window.innerWidth)) * 2 - 1;
+    pointer.y = - (( event.clientY )/ (window.innerHeight )) * 2 + 1;
 
 
     raycaster.setFromCamera( pointer, camera );
 
     // calculate objects intersecting the picking ray
     const intersects = raycaster.intersectObjects(scene.children, true);
-    intersects.forEach( obj => obj.object.position.x = 10 );
+    intersects.forEach( obj => obj.object.position.x += 10 );
 
 
     for ( var i = 0; i < intersects.length; i++ ) {
