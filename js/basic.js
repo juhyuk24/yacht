@@ -37,7 +37,7 @@ initPhysics();
 initScene();
 
 window.addEventListener('resize', updateSceneSize);
-window.addEventListener( 'pointerdown', onMouseClick );
+window.addEventListener( 'click', onMouseClick );
 
 //window.addEventListener('dblclick', throwDice);
 //rollBtn.addEventListener('click', throwDice);
@@ -99,12 +99,13 @@ function initScene() {
     });
 
 
-    const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00, wireframe : false, transparent : false, opacity : 0});
-    const boxWall1 = new THREE.Mesh(new THREE.BoxGeometry(13,0,13), boxMaterial); // 바닥
-    const boxWall2 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 왼쪽벽
-    const boxWall3 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 오른쪽벽
-    const boxWall4 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 위쪽벽
-    const boxWall5 = new THREE.Mesh(createBoxWallGeometry(), boxMaterial); // 아래쪽벽
+    //const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00, wireframe : false, transparent : false, opacity : 0});
+    const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFFFF});
+    const boxWall1 = new THREE.Mesh(new THREE.BoxGeometry(13,0,13), new THREE.MeshStandardMaterial({ color: 0xFFFFFF})); // 바닥
+    const boxWall2 = new THREE.Mesh(createBoxWallGeometry(), new THREE.MeshStandardMaterial({ color: 0xFFFFFF})); // 왼쪽벽
+    const boxWall3 = new THREE.Mesh(createBoxWallGeometry(), new THREE.MeshStandardMaterial({ color: 0xFFFFFF})); // 오른쪽벽
+    const boxWall4 = new THREE.Mesh(createBoxWallGeometry(), new THREE.MeshStandardMaterial({ color: 0xFFFFFF})); // 위쪽벽
+    const boxWall5 = new THREE.Mesh(createBoxWallGeometry(), new THREE.MeshStandardMaterial({ color: 0xFFFFFF})); // 아래쪽벽
 
     boxWall2.rotation.y = Math.PI / 2;
     boxWall3.rotation.y = Math.PI / 2;
@@ -113,9 +114,15 @@ function initScene() {
     boxWall4.position.z = 5.6;
     boxWall5.position.z = -5.6;
 
-    boxMeshs = new THREE.Group();
+    /*boxMeshs = new THREE.Group();
     boxMeshs.add(boxWall1, boxWall2, boxWall3, boxWall4,boxWall5);
-    scene.add(boxMeshs);
+    scene.add(boxMeshs);*/
+
+    scene.add(boxWall1);
+    scene.add(boxWall2);
+    scene.add(boxWall3);
+    scene.add(boxWall4);
+    scene.add(boxWall5);
 
 
     const boxBody1 = new CANNON.Body({
@@ -156,7 +163,6 @@ function initScene() {
     physicsWorld.addBody(boxBody5);
 
 
-    console.log(scene.children);
     render();
 
 }
@@ -166,20 +172,23 @@ function onMouseClick( event ) {
     // calculate pointer position in normalized device coordinates
     // (-1 to +1) for both components
 
-    const gapX = event.clientX - event.offsetX;
-    const gapY = event.clientY - event.offsetY;
+    pointer.x = (( event.clientX / window.innerWidth)) * 2 - 1;
+    pointer.y = - (( event.clientY / window.innerHeight )) * 2 + 1;
 
-    pointer.x = (( event.clientX - gapX) / (canvasContainer.clientWidth)) * 2 - 1;
-    pointer.y = - (( event.clientY - gapY) / (scoreboardContainer.clientHeight )) * 2 + 1;
 
     raycaster.setFromCamera( pointer, camera );
 
     // calculate objects intersecting the picking ray
-    const intersects = raycaster.intersectObjects(scene.children);
-    intersects.forEach( obj => obj.object.material.color.set(0x00ff00) );
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    intersects.forEach( obj => obj.object.position.x = 10 );
 
 
-    console.log(pointer);
+    for ( var i = 0; i < intersects.length; i++ ) {
+        console.log( intersects[ i ] );
+
+    }
+
+    //console.log(pointer);
 
 }
 
