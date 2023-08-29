@@ -1,15 +1,80 @@
-// 주사위 값들을 저장할 배열
-let diceValues = [];
+function setSub() {
+    let player1Sub = document.getElementById("player1-sub");
+    let player2Sub = document.getElementById("player2-sub");
 
-// 현재 플레이어 (1 또는 2)
-let currentPlayer = 1;
+    let player1Aces = document.getElementById("player1-aces");
+    let player1Twos = document.getElementById("player1-twos");
+    let player1Threes = document.getElementById("player1-threes");
+    let player1Fours = document.getElementById("player1-fours");
+    let player1Fives = document.getElementById("player1-fives");
+    let player1Sixes = document.getElementById("player1-sixes");
 
-// 현재 턴 수
-let remainingTurns = 3;
+    let player1Sum = 0;
+    if(!isNaN(parseInt(player1Aces.textContent))) {
+        player1Sum += parseInt(player1Aces.textContent);
+    }
+    if(!isNaN(parseInt(player1Twos.textContent))) {
+        player1Sum += parseInt(player1Twos.textContent);
+    }
+    if(!isNaN(parseInt(player1Threes.textContent))) {
+        player1Sum += parseInt(player1Threes.textContent);
+    }
+    if(!isNaN(parseInt(player1Fours.textContent))) {
+        player1Sum += parseInt(player1Fours.textContent);
+    }
+    if(!isNaN(parseInt(player1Fives.textContent))) {
+        player1Sum += parseInt(player1Fives.textContent);
+    }
+    if(!isNaN(parseInt(player1Sixes.textContent))) {
+        player1Sum += parseInt(player1Sixes.textContent);
+    }
 
-// 플레이어들의 점수
-let player1Score = 0;
-let player2Score = 0;
+    let player2Aces = document.getElementById("player2-aces");
+    let player2Twos = document.getElementById("player2-twos");
+    let player2Threes = document.getElementById("player2-threes");
+    let player2Fours = document.getElementById("player2-fours");
+    let player2Fives = document.getElementById("player2-fives");
+    let player2Sixes = document.getElementById("player2-sixes");
+
+    let player1Bonus = document.getElementById("player1-bonus");
+    let player2Bonus = document.getElementById("player2-bonus");
+
+    let player2Sum = 0;
+    if(!isNaN(parseInt(player2Aces.textContent))) {
+        player2Sum += parseInt(player2Aces.textContent);
+    }
+    if(!isNaN(parseInt(player2Twos.textContent))) {
+        player2Sum += parseInt(player2Twos.textContent);
+    }
+    if(!isNaN(parseInt(player2Threes.textContent))) {
+        player2Sum += parseInt(player2Threes.textContent);
+    }
+    if(!isNaN(parseInt(player2Fours.textContent))) {
+        player2Sum += parseInt(player2Fours.textContent);
+    }
+    if(!isNaN(parseInt(player2Fives.textContent))) {
+        player2Sum += parseInt(player2Fives.textContent);
+    }
+    if(!isNaN(parseInt(player2Sixes.textContent))) {
+        player2Sum += parseInt(player2Sixes.textContent);
+    }
+
+    player1Sub.textContent = player1Sum;
+    player2Sub.textContent = player2Sum;
+
+    if(player1Sum > 64)
+        player1Bonus.textContent = 35;
+    if(player2Sum > 64)
+        player2Bonus.textContent = 35;
+}
+
+function setTotal() {
+    let player1Total = document.getElementById("player1-total");
+    let player2Total = document.getElementById("player2-total");
+
+    player1Total.textContent = "0";
+    player2Total.textContent = "0";
+}
 
 // 주사위 굴리기 버튼 상태 설정
 function setRollButtonState(disabled) {
